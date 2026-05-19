@@ -127,6 +127,76 @@ function renderCards(eventsToRender) {
 function initApp() {
   events = seedEvents.slice();
   renderCards(events);
+  updateStats(events);
+
+  document.getElementById('eventsGrid').addEventListener('click', (e) => {
+    const card = e.target.closest('.event-card');
+    if (!card) return;
+    const id = Number(card.dataset.id);
+    if (e.target.classList.contains('btn-register')) handleRegister(id);
+    if (e.target.classList.contains('btn-cancel')) handleCancel(id);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
+
+function updateStats(events) {
+  const totalEvents = events.length;
+  const totalRegistered = events.reduce((sum, e) => sum + e.registered, 0);
+  const totalRemaining = events.reduce((sum, e) => sum + (e.seats - e.registered), 0);
+  document.getElementById('statTotalEvents').textContent = totalEvents;
+  document.getElementById('statTotalRegistered').textContent = totalRegistered;
+  document.getElementById('statTotalRemaining').textContent = totalRemaining;
+}
+
+function updateCard(id, events) {
+  const card = document.querySelector(`[data-id="${id}"]`);
+  const event = events.find((e) => e.id === id);
+  if (!card || !event) return;
+
+  const remaining = event.seats - event.registered;
+  card.querySelector('.card-registered').textContent = String(event.registered);
+
+  const remainingSpan = card.querySelector('.card-remaining');
+  remainingSpan.textContent = String(remaining);
+  if (remaining === 0) {
+    remainingSpan.classList.remove('text-green-600');
+    remainingSpan.classList.add('text-red-500');
+  } else {
+    remainingSpan.classList.remove('text-red-500');
+    remainingSpan.classList.add('text-green-600');
+  }
+
+  card.querySelector('.btn-register').disabled = remaining === 0;
+  card.querySelector('.btn-cancel').disabled = event.registered === 0;
+
+  const badgeWrapper = card.querySelector('.flex.flex-col.items-end');
+  const existingBadge = badgeWrapper ? badgeWrapper.querySelector('.badge-full') : null;
+  if (remaining === 0 && !existingBadge && badgeWrapper) {
+    const fullBadge = document.createElement('span');
+    fullBadge.className = 'badge-full bg-red-100 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full';
+    fullBadge.textContent = 'Full';
+    badgeWrapper.appendChild(fullBadge);
+  } else if (remaining > 0 && existingBadge) {
+    existingBadge.remove();
+  }
+}
+
+function handleRegister(id) {
+  const event = events.find((e) => e.id === id);
+  if (!event) return;
+  const remaining = event.seats - event.registered;
+  if (remaining <= 0) return;
+  event.registered += 1;
+  updateCard(id, events);
+  updateStats(events);
+}
+
+function handleCancel(id) {
+  const event = events.find((e) => e.id === id);
+  if (!event) return;
+  if (event.registered <= 0) return;
+  event.registered -= 1;
+  updateCard(id, events);
+  updateStats(events);
+}
