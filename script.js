@@ -125,7 +125,8 @@ function renderCards(eventsToRender) {
 }
 
 function initApp() {
-  events = seedEvents.slice();
+  const saved = loadEvents();
+  events = saved.length > 0 ? saved : seedEvents.slice();
   renderCards(events);
   updateStats(events);
 
@@ -194,6 +195,7 @@ function handleRegister(id) {
   event.registered += 1;
   updateCard(id, events);
   updateStats(events);
+  persist(events);
 }
 
 function handleCancel(id) {
@@ -203,6 +205,26 @@ function handleCancel(id) {
   event.registered -= 1;
   updateCard(id, events);
   updateStats(events);
+  persist(events);
+}
+
+function persist(events) {
+  try {
+    localStorage.setItem('events', JSON.stringify(events));
+  } catch (err) {
+    console.warn('localStorage write failed:', err);
+    alert('Could not save data: storage quota exceeded.');
+  }
+}
+
+function loadEvents() {
+  try {
+    const raw = localStorage.getItem('events');
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
 }
 
 function validateForm(title, category, seats) {
@@ -230,6 +252,7 @@ function handleAddEvent(e) {
   events.push(newEvent);
   renderSingleCard(newEvent);
   updateStats(events);
+  persist(events);
   clearForm();
 }
 
