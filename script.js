@@ -136,6 +136,10 @@ function initApp() {
     if (e.target.classList.contains('btn-register')) handleRegister(id);
     if (e.target.classList.contains('btn-cancel')) handleCancel(id);
   });
+
+  document.getElementById('addEventForm').addEventListener('submit', (e) => {
+    handleAddEvent(e);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
@@ -199,4 +203,38 @@ function handleCancel(id) {
   event.registered -= 1;
   updateCard(id, events);
   updateStats(events);
+}
+
+function validateForm(title, category, seats) {
+  if (title === '') return { valid: false, message: 'Event title is required.' };
+  if (category === '') return { valid: false, message: 'Category is required.' };
+  if (isNaN(seats) || seats < 1 || !Number.isInteger(seats))
+    return { valid: false, message: 'Seats must be a whole number of at least 1.' };
+  return { valid: true, message: '' };
+}
+
+function handleAddEvent(e) {
+  e.preventDefault();
+  const title = document.getElementById('eventTitle').value.trim();
+  const category = document.getElementById('eventCategory').value.trim();
+  const seats = parseInt(document.getElementById('eventSeats').value, 10);
+  const result = validateForm(title, category, seats);
+  const errorEl = document.getElementById('formError');
+  if (!result.valid) {
+    errorEl.textContent = result.message;
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  errorEl.classList.add('hidden');
+  const newEvent = { id: generateId(), title, category, seats, registered: 0 };
+  events.push(newEvent);
+  renderSingleCard(newEvent);
+  updateStats(events);
+  clearForm();
+}
+
+function clearForm() {
+  document.getElementById('eventTitle').value = '';
+  document.getElementById('eventCategory').value = '';
+  document.getElementById('eventSeats').value = '';
 }
