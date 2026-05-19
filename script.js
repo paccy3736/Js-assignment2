@@ -141,6 +141,11 @@ function initApp() {
   document.getElementById('addEventForm').addEventListener('submit', (e) => {
     handleAddEvent(e);
   });
+
+  const debouncedSearch = debounce((val) => handleSearch(val), 150);
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    debouncedSearch(e.target.value);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
@@ -260,4 +265,24 @@ function clearForm() {
   document.getElementById('eventTitle').value = '';
   document.getElementById('eventCategory').value = '';
   document.getElementById('eventSeats').value = '';
+}
+
+function debounce(fn, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function handleSearch(query) {
+  const q = query.trim().toLowerCase();
+  if (q === '') {
+    renderCards(events);
+    return;
+  }
+  const filtered = events.filter(
+    (e) => e.title.toLowerCase().includes(q) || e.category.toLowerCase().includes(q)
+  );
+  renderCards(filtered);
 }
